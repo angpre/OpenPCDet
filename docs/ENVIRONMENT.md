@@ -55,11 +55,40 @@ have wheels: `torch` 2.5.1 (3.9-3.13), `torchvision` 0.20.1 (3.9-3.12) and `spco
 
 ## Compiled extensions
 
-OpenPCDet ships CUDA/C++ extensions that are compiled on each machine and are therefore not covered
-by `uv.lock`. Build instructions and the tested compiler versions will be recorded here.
+OpenPCDet ships seven CUDA/C++ extensions (3D IoU and NMS, RoI pooling, PointNet++ operators, BEV
+pooling, in-group indices). They are compiled on each machine against the installed PyTorch and the
+local CUDA toolkit, so they are not covered by `uv.lock`.
+
+- They are built in place with `python setup.py build_ext --inplace`: each compiled library is
+  written next to its Python wrapper under `pcdet/ops/`. The `pcdet` package itself is not
+  installed into the environment; the scripts in `tools/` add the repository root to the Python
+  path, as in upstream OpenPCDet, and are run from inside `tools/`.
+- The build must run through `uv run`, which puts the environment's `ninja` on the path. PyTorch
+  then compiles the sources in parallel. Without `ninja` the build falls back to a serial backend
+  (about 15 minutes instead of about 4 on 8 CPU cores).
+- The CUDA sources are compiled for the architecture of the GPU visible during the build. To build
+  on a machine without a GPU, or for a different GPU model, set `TORCH_CUDA_ARCH_LIST`
+  (for example `TORCH_CUDA_ARCH_LIST="8.9"`) before running the build.
+- The extensions must be rebuilt after changing the PyTorch version, the CUDA toolkit or any file
+  under `pcdet/ops/*/src/`.
+
+`setup.py` and `pyproject.toml` both declare package metadata. During the build setuptools warns
+that the values in `setup.py` are ignored in favour of `pyproject.toml`; this is expected.
 
 ## Setup steps
 
-To be written as the environment is built. The goal is a single documented sequence
-(load compiler and CUDA, `uv sync`, build extensions) that reproduces the environment on a new
-machine.
+1. Install [uv](https://docs.astral.sh/uv/).
+2. Make `gcc`, `g++` and `nvcc` available on `PATH`, in the versions of the reference platform.
+   On a cluster with environment modules this is typically
+   `module load gcc/11.2.0 cuda/12.1`.
+3. Run `bash scripts/setup_env.sh`.
+
+The script checks that the tools are present, runs `uv sync --locked` (installs Python 3.12 and
+every package at the version recorded in `uv.lock`), builds the extensions and finally imports all
+seven of them. It can be re-run at any time; an up-to-date environment takes a few seconds.
+
+Notes:
+
+- `uv sync` needs a C compiler because `sharedarray` is compiled from source.
+- Run commands with `uv run`, for example `cd tools && uv run python train.py ...`, or activate
+  the environment with `source .venv/bin/activate`.
