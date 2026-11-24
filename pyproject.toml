@@ -8,6 +8,20 @@ dependencies = [
     "torch==2.5.1",
     "torchvision==0.20.1",
     "spconv-cu121==2.3.8",
+    # Pure-Python or generic dependencies of OpenPCDet. No version constraints:
+    # the versions in use are recorded in uv.lock.
+    "numpy",
+    "numba",
+    "tensorboardx",
+    "easydict",
+    "pyyaml",
+    "scikit-image",
+    "tqdm",
+    "pyquaternion",
+    "scipy",
+    "pillow",
+    "sharedarray",
+    "nuscenes-devkit>=1.2.0",
 ]
 
 [tool.uv]
