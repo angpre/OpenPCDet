@@ -1,0 +1,27 @@
+[project]
+name = "pcdet"
+version = "0.6.0"
+description = "OpenPCDet-based codebase for 3D object detection"
+readme = "README.md"
+requires-python = "==3.12.*"
+dependencies = [
+    "torch==2.5.1",
+]
+
+[tool.uv]
+# The project itself is not installed by `uv sync`: its CUDA extensions are
+# compiled in a separate, documented step (see docs/ENVIRONMENT.md).
+package = false
+# Always use a Python interpreter downloaded by uv, never the system one.
+python-preference = "only-managed"
+
+# PyTorch wheels built for CUDA 12.1 are not on PyPI; they come from the
+# PyTorch index. `explicit` restricts this index to the packages listed in
+# [tool.uv.sources].
+[[tool.uv.index]]
+name = "pytorch-cu121"
+url = "https://download.pytorch.org/whl/cu121"
+explicit = true
+
+[tool.uv.sources]
+torch = { index = "pytorch-cu121" }

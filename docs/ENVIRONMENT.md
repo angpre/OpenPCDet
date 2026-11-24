@@ -18,8 +18,9 @@ The platform on which the environment is built and tested.
 | CUDA toolkit | 12.1 | needed to compile the CUDA extensions (`nvcc`) |
 | GCC | 11.2.0 | compiler for the CUDA extensions |
 | uv | 0.11.6 | installs Python and all packages |
-| Python | to be decided | installed through uv, not the system Python |
-| PyTorch | to be decided | wheels built for CUDA 12.1 |
+| Python | 3.12 | installed through uv (`.python-version`), not the system Python |
+| PyTorch | 2.5.1+cu121 | wheels built for CUDA 12.1, from the PyTorch index |
+| NVIDIA driver | 595.99 | any driver that supports CUDA 12.1 should work |
 
 ## Packages
 
@@ -28,7 +29,11 @@ One row per direct dependency declared in `pyproject.toml`. Transitive dependenc
 
 | Package | Version constraint | Needed for | Why this version |
 |---|---|---|---|
-| (none yet) | | | |
+| `torch` | `==2.5.1` (cu121 build) | Everything: models, training, the CUDA extensions are compiled against it. | 2.5.1 is the newest PyTorch release published for CUDA 12.1. It is installed from `https://download.pytorch.org/whl/cu121` because PyPI does not host the CUDA 12.1 build. Pinned exactly because the compiled extensions and `spconv` must match it. |
+
+Python 3.12 is the newest Python for which all three binary dependencies that must match CUDA 12.1
+have wheels: `torch` 2.5.1 (3.9-3.13), `torchvision` 0.20.1 (3.9-3.12) and `spconv-cu121` 2.3.8
+(3.9-3.13).
 
 ## Compiled extensions
 
