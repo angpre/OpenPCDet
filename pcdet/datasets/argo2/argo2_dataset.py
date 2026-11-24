@@ -4,19 +4,21 @@ import argparse
 import os
 from os import path as osp
 import torch
-from av2.utils.io import read_feather
 import numpy as np
 import multiprocessing as mp
 import pickle as pkl
 from pathlib import Path
-import pandas as pd
 
 from ..dataset import DatasetTemplate
-from .argo2_utils.so3 import yaw_to_quat, quat_to_yaw
 from .argo2_utils.constants import LABEL_ATTR
+
+# av2, pandas and kornia (through argo2_utils.so3) are only needed for Argoverse 2.
+# They are imported inside the functions that use them, so that the other datasets
+# can be used without installing these packages.
 
 
 def process_single_segment(segment_path, split, info_list, ts2idx, output_dir, save_bin):
+    from av2.utils.io import read_feather
     test_mode = 'test' in split
     if not test_mode:
         segment_anno = read_feather(Path(osp.join(segment_path, 'annotations.feather')))
@@ -38,6 +40,7 @@ def process_single_segment(segment_path, split, info_list, ts2idx, output_dir, s
 
 
 def process_and_save_frame(frame_path, frame_anno, ts2idx, segname, output_dir, save_bin):
+    from .argo2_utils.so3 import quat_to_yaw
     frame_info = {}
     frame_info['uuid'] = segname + '/' + frame_path.split('/')[-1].split('.')[0]
     frame_info['sample_idx'] = ts2idx[frame_info['uuid']]
@@ -101,6 +104,7 @@ def process_and_save_frame(frame_path, frame_anno, ts2idx, segname, output_dir, 
 
 
 def save_point_cloud(frame_path, save_path):
+    from av2.utils.io import read_feather
     lidar = read_feather(Path(frame_path))
     lidar = lidar.loc[:, ['x', 'y', 'z', 'intensity']].to_numpy().astype(np.float32)
     lidar.tofile(save_path)
@@ -404,6 +408,7 @@ class Argo2Dataset(DatasetTemplate):
         return dts
 
     def lidar_box_to_argo2(self, boxes):
+        from .argo2_utils.so3 import yaw_to_quat
         boxes = torch.Tensor(boxes)
         cnt_xyz = boxes[:, :3]
         lwh = boxes[:, [3, 4, 5]]
@@ -493,6 +498,9 @@ def parse_config():
 
 
 if __name__ == '__main__':
+    import pandas as pd
+    from av2.utils.io import read_feather
+
     args = parse_config()
     root = args.root_path
     output_dir = args.output_dir
