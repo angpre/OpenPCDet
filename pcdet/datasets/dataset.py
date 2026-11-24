@@ -299,7 +299,9 @@ class DatasetTemplate(torch_data.Dataset):
 
                         images.append(image_pad)
                     ret[key] = np.stack(images, axis=0)
-                elif key in ['calib']:
+                elif key in ['calib', 'img_process_infos']:
+                    # img_process_infos is a nested list of mixed types (ragged); NumPy >= 1.24
+                    # refuses to stack it into an array, and nothing reads it after collation
                     ret[key] = val
                 elif key in ["points_2d"]:
                     max_len = max([len(_val) for _val in val])
